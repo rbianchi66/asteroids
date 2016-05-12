@@ -3,21 +3,58 @@
 
 import sys
 from PyQt4.Qt import *
+import random
+import time
+ 
+random.seed(time.time())
+
+class Trajectory():
+    def __init__(self, minx, miny, maxx, maxy):
+        self.minx = random.randint(minx - 20, minx)
+        self.miny = random.randint(miny - 20, miny)
+        self.maxx = random.randint(maxx, maxx + 20)
+        self.maxy = random.randint(maxy, maxy + 20)
+        self.m = float(self.maxy-self.miny) / float(self.maxx-self.minx)
+        self.posx = random.randint(self.minx, self.maxx)
+        self.posy = self.y(self.posx)
+        self.d = 1.0 if random.random() > 0.5 else -1.0
+
+    def y(self, x):
+        return self.miny + x * self.m
+        
+    def getPosy(self):
+        return self.y(self.posx)
+    
+    posy = property(getPosy)
 
 class Asteroid():
     def __init__(self, minx, miny, maxx, maxy):
-        import random
-        import time
         import math
-        random.seed(time.time())
+        self.trajectory = Trajectory(minx, miny, maxx, maxy)
         nvert = random.randint(10,20)
         nsize = random.randint(50,200)
-        sx = random.randint(minx, maxx)
-        sy = random.randint(miny, maxy)
-        print "sx:", sx, "sy:", sy
-        pts = [QPointF(sx+nsize*math.cos(n*math.pi/(nvert/2))-random.randint(0,nsize/3), sy+nsize*math.sin(n*math.pi/(nvert/2))-random.randint(0,nsize/3)) for n in xrange(nvert)]
-        pts.append(pts[0])
-        self.polygon = QPolygonF(pts)
+        sx = self.trajectory.posx
+        sy = self.trajectory.posy
+        self.pts = [QPointF(nsize*math.cos(n*math.pi/(nvert/2))-random.randint(0,nsize/3), nsize*math.sin(n*math.pi/(nvert/2))-random.randint(0,nsize/3)) for n in xrange(nvert)]
+        self.pts.append(self.pts[0])
+    
+    def getPolygon(self):
+        return QPolygonF([QPointF(self.posx+p.x(), self.posy+p.y()) for p in self.pts])
+        
+    def getPosx(self):
+        return self.trajectory.posx
+
+    def setPosx(self, x):
+        self.trajectory.posx = x
+
+    def getPosy(self):
+        return self.trajectory.posy
+
+    posx = property(getPosx, setPosx)
+    posy = property(getPosy)
+    polygon = property(getPolygon)
+
+
 
 class GameWidget(QWidget):
     def __init__(self, parent):
@@ -58,7 +95,9 @@ class GameWidget(QWidget):
         self.update()
 
     def clock(self):
-        print "clock"
+        for o in self.objects:
+            o.posx += o.trajectory.d
+        self.update()
 
 
 class MainWindow(QMainWindow):
