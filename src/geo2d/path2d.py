@@ -144,4 +144,5 @@ class Path():
                 p1.x = pt.y
         return (p0, p1)
     
-    
+    def __repr__(self):
+        return "Path(" + repr(self.pts) + ")"
