@@ -3,7 +3,8 @@ Created on Apr 25, 2019
 
 @author: rbianchi
 '''
-from p2d import P, dist
+from p2d import P, dist, xor
+import math
 
 def fixdist(p, l, a, b, da, db, bsf, bsl, bss, bsp):
     ll = l.len(b) - l.len(a)
@@ -69,6 +70,9 @@ class Path():
 
     def __imul__(self, k):
         self.pts = [pt*k for pt in self.pts]
+
+    def __len__(self):
+        return len(self.pts)
         
     def len(self, index):
         if self.calc() == 0:
@@ -146,3 +150,47 @@ class Path():
     
     def __repr__(self):
         return "Path(" + repr(self.pts) + ")"
+
+def intersect(a, b, c, d):
+    ka = xor((a - c), (d - c))
+    kb = xor((b - c), (d - c))
+    kc = xor((c - a), (b - a))
+    kd = xor((d - a), (b - a))
+    return (ka * kb < 0) and (kc * kd < 0)
+
+
+def intersections(path1, path2):
+    npaths = []
+    lp = []
+    for i in xrange(len(path1)-1):
+        lp.append(path1[i])
+        for j in xrange(len(path2)-1):
+            if intersect(path1[i], path1[i+1], path2[j], path2[j+1]):
+                p1 = path1[i]
+                p2 = path1[i+1]
+                p3 = path2[j]
+                p4 = path2[j+1]
+                xD1 = p2.x-p1.x
+                xD2 = p4.x-p3.x
+                yD1 = p2.y-p1.y
+                yD2 = p4.y-p3.y
+                xD3 = p1.x-p3.x
+                yD3 = p1.y-p3.y
+                len1 = math.sqrt(xD1*xD1+yD1*yD1)
+                len2 = math.sqrt(xD2*xD2+yD2*yD2)
+                dot = (xD1*xD2+yD1*yD2)
+                deg = dot/(len1*len2)
+                if math.fabs(deg) != 1.0:
+                    div = yD2*xD1-xD2*yD1
+                    ua = (xD2*yD3-yD2*xD3)/div
+                    nx = p1.x+ua*xD1
+                    ny = p1.y+ua*yD1
+                    cross = P(nx,ny)
+                    lp.append(cross);
+                    npaths.append(Path(lp))
+                    lp = []
+                    lp.append(cross)
+    lp.append(path1[len(path1)-1])
+    if len(lp) > 1:
+        npaths.append(Path(lp))
+    return npaths

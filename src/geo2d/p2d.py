@@ -73,3 +73,5 @@ def dist2(a, b):
 def dist(a, b):
     return len(a-b)
     
+def xor(a, b):
+    return a.x*b.y-a.y*b.x
